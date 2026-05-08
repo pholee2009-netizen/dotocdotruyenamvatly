@@ -180,51 +180,27 @@ const App: React.FC = () => {
 
   const playIntroAudio = async () => {
     try {
-      // 1. Lấy Key từ Vercel
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      
       const prompt = "Chào mừng bạn! Hãy nghe hướng dẫn ngắn để bắt đầu thí nghiệm đo tốc độ âm thanh nhé.";
 
-      // 2. Lấy chữ từ AI
       const result = await model.generateContent(prompt);
       const text = result.response.text();
 
-      // 3. Hàm hỗ trợ chọn giọng xịn nhất
-      const speakWithBestVoice = () => {
-        // Trước khi nói, hủy các câu đang đọc dở để tránh bị chồng giọng
-        window.speechSynthesis.cancel(); 
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        const voices = window.speechSynthesis.getVoices();
-        
-        // Tìm giọng Google hoặc giọng Việt chuẩn
-        const viVoice = voices.find(v => v.lang.includes('vi-VN') && v.name.includes('Google')) || 
-                        voices.find(v => v.lang.includes('vi-VN'));
-
-        if (viVoice) utterance.voice = viVoice;
-        utterance.lang = 'vi-VN';
-        utterance.rate = 0.85; // Tốc độ vừa phải, nghe sẽ bớt lơ lớ
-        utterance.pitch = 1.0;
-
-        window.speechSynthesis.speak(utterance);
-      };
-
-      // Đợi giọng nói nạp xong rồi mới phát
-      if (window.speechSynthesis.getVoices().length === 0) {
-        window.speechSynthesis.onvoiceschanged = speakWithBestVoice;
-      } else {
-        speakWithBestVoice();
-      }
+      // Dùng link trực tiếp từ Google Translate - Giọng chuẩn 100%
+      const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
+      
+      const audio = new Audio(googleTtsUrl);
+      await audio.play();
 
     } catch (error) {
       console.error("Lỗi âm thanh:", error);
-      const fallback = new SpeechSynthesisUtterance("Chào mừng bạn đến với thí nghiệm.");
+      // Phương án dự phòng cuối cùng
+      const fallback = new SpeechSynthesisUtterance("Chào mừng bạn.");
       fallback.lang = 'vi-VN';
-      fallback.rate = 0.85;
       window.speechSynthesis.speak(fallback);
     }
-  };
+  }; // <--- Nhớ phải có dấu này để đóng hàm
   
   const handleStartIntro = async () => {
     setIsGeneratingAudio(true);
