@@ -192,23 +192,25 @@ const App: React.FC = () => {
 
       // 3. Hàm hỗ trợ chọn giọng xịn nhất
       const speakWithBestVoice = () => {
+        // Trước khi nói, hủy các câu đang đọc dở để tránh bị chồng giọng
+        window.speechSynthesis.cancel(); 
+        
         const utterance = new SpeechSynthesisUtterance(text);
         const voices = window.speechSynthesis.getVoices();
         
-        // Ưu tiên tìm giọng Google (nghe rất giống người thật)
-        const googleVoice = voices.find(v => v.lang.includes('vi-VN') && v.name.includes('Google'));
-        // Nếu không có Google, tìm bất kỳ giọng Việt nào khác
-        const viVoice = voices.find(v => v.lang.includes('vi-VN'));
+        // Tìm giọng Google hoặc giọng Việt chuẩn
+        const viVoice = voices.find(v => v.lang.includes('vi-VN') && v.name.includes('Google')) || 
+                        voices.find(v => v.lang.includes('vi-VN'));
 
-        utterance.voice = googleVoice || viVoice || null;
+        if (viVoice) utterance.voice = viVoice;
         utterance.lang = 'vi-VN';
-        utterance.rate = 0.85; // Đọc chậm lại chút nữa cho rõ chữ
+        utterance.rate = 0.85; // Tốc độ vừa phải, nghe sẽ bớt lơ lớ
         utterance.pitch = 1.0;
 
         window.speechSynthesis.speak(utterance);
       };
 
-      // Mẹo: Nếu danh sách giọng chưa tải xong, đợi nó tải rồi mới nói
+      // Đợi giọng nói nạp xong rồi mới phát
       if (window.speechSynthesis.getVoices().length === 0) {
         window.speechSynthesis.onvoiceschanged = speakWithBestVoice;
       } else {
@@ -219,8 +221,10 @@ const App: React.FC = () => {
       console.error("Lỗi âm thanh:", error);
       const fallback = new SpeechSynthesisUtterance("Chào mừng bạn đến với thí nghiệm.");
       fallback.lang = 'vi-VN';
+      fallback.rate = 0.85;
       window.speechSynthesis.speak(fallback);
     }
+  };
   
   const handleStartIntro = async () => {
     setIsGeneratingAudio(true);
