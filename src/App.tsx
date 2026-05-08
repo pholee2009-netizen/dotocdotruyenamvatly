@@ -181,7 +181,7 @@ const App: React.FC = () => {
   const playIntroAudio = async () => {
     try {
       // 1. Khởi tạo AI
-      const genAI = new GoogleGenerativeAI(process.env.API_KEY || "");
+      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       const prompt = "Mình sẽ giúp bạn đo tốc độ truyền sóng âm bằng cách bạn vỗ tay hay nói to vào màn hình. Tôi sẽ vẽ đồ thị biểu diễn li độ U x và U tê. Chúng ta sẽ đo được bước sóng lam đa và chu kỳ T in. Tốc độ truyền sóng bằng lam đa chia cho chu kỳ. Các bạn làm 3 lần nhé.";
