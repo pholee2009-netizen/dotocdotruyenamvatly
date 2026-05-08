@@ -179,28 +179,48 @@ const App: React.FC = () => {
   };
 
   const playIntroAudio = async () => {
-    try {
-      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt = "Chào mừng bạn! Hãy nghe hướng dẫn ngắn để bắt đầu thí nghiệm đo tốc độ âm thanh nhé.";
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const prompt = " mMình sẽ giúp bạn đo tốc độ truyền sóng âm bằng cách bạn vỗ tay hay nói to vàoàn hình. Tôi sẽ vẽ đồ thị biểu diễn li độ U x và U tê. Chúng ta sẽ đo được bước sóng lam đa và chu kỳ T in. Tốc độ truyền sóng bằng lam đa chia cho chu kỳ. Các bạn làm 3 lần nhé.";
+        
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash-preview-tts",
+            contents: [{ parts: [{ text: prompt }] }],
+            config: {
+                responseModalities: [Modality.AUDIO],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName: 'Kore' },
+                    },
+                },
+            },
+        });
+        
+        const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        const outputNode = outputAudioContext.createGain();
+        outputNode.connect(outputAudioContext.destination);
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+        const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (!base64Audio) {
+            throw new Error("No audio data received from API.");
+        }
 
-      // Dùng link trực tiếp từ Google Translate - Giọng chuẩn 100%
-      const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
-      
-      const audio = new Audio(googleTtsUrl);
-      await audio.play();
+        const audioBuffer = await decodeAudioData(
+            decode(base64Audio),
+            outputAudioContext,
+            24000,
+            1,
+        );
+        const source = outputAudioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(outputNode);
+        source.start();
 
-    } catch (error) {
-      console.error("Lỗi âm thanh:", error);
-      // Phương án dự phòng cuối cùng
-      const fallback = new SpeechSynthesisUtterance("Chào mừng bạn.");
-      fallback.lang = 'vi-VN';
-      window.speechSynthesis.speak(fallback);
-    }
-  }; // <--- Nhớ phải có dấu này để đóng hàm
+    } catch (error) {
+        console.error("Error generating or playing audio:", error);
+        alert("Đã có lỗi xảy ra khi tải âm thanh hướng dẫn.");
+    }
+  };
   
   const handleStartIntro = async () => {
     setIsGeneratingAudio(true);
