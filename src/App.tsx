@@ -180,24 +180,28 @@ const App: React.FC = () => {
 
   const playIntroAudio = async () => {
     try {
-      // 1. Khởi tạo AI
+      // 1. Lấy Key từ Vercel
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       const prompt = "Chào mừng bạn! Hãy nghe hướng dẫn ngắn để bắt đầu thí nghiệm đo tốc độ âm thanh nhé.";
 
-      // 2. Lấy chữ từ AI
+      // 2. Chỉ lấy CHỮ từ AI (không lấy audio vì audio hay bị lỗi data)
       const result = await model.generateContent(prompt);
       const text = result.response.text();
 
-      // 3. Phát ra tiếng nói (Dùng giọng hệ thống, không bao giờ lỗi)
+      // 3. Dùng giọng nói có sẵn của máy tính để đọc chữ đó lên
+      // Cách này không cần mạng mạnh, không lo thiếu data, cực kỳ ổn định
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'vi-VN'; 
       window.speechSynthesis.speak(utterance);
 
     } catch (error) {
       console.error("Lỗi âm thanh:", error);
-      alert("Đã có lỗi xảy ra, nhưng bạn vẫn có thể bắt đầu thí nghiệm!");
+      // Nếu AI lỗi, vẫn có một câu chào mặc định để không bị hiện bảng đỏ
+      const fallback = new SpeechSynthesisUtterance("Chào mừng bạn đến với thí nghiệm đo tốc độ âm thanh.");
+      fallback.lang = 'vi-VN';
+      window.speechSynthesis.speak(fallback);
     }
   };
   
