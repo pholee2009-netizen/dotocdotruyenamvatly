@@ -180,30 +180,31 @@ const App: React.FC = () => {
 
   const playIntroAudio = async () => {
     try {
-      // 1. Khởi tạo AI (Dùng đúng chuẩn GoogleGenerativeAI)
+      // 1. Khởi tạo AI lấy nội dung (Dùng Key VITE chuẩn)
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      const prompt = "Mình sẽ giúp bạn đo tốc độ truyền sóng âm bằng cách bạn vỗ tay hay nói to vào màn hình. Tôi sẽ vẽ đồ thị biểu diễn li độ U x và U tê. Chúng ta sẽ đo được bước sóng lam đa và chu kỳ T in. Tốc độ truyền sóng bằng lam đa chia cho chu kỳ. Các bạn làm 3 lần nhé.";
+      const prompt = "Chào mừng bạn đến với thí nghiệm Vật lý đo tốc độ truyền âm. Mình sẽ hướng dẫn bạn: Đầu tiên, hãy vỗ tay hoặc nói to để tạo nguồn âm. Mình sẽ giúp bạn vẽ đồ thị, xác định bước sóng và chu kỳ. Cuối cùng, chúng ta sẽ tính được tốc độ truyền âm bằng công thức V bằng bước sóng chia chu kỳ. Bạn đã sẵn sàng chưa? Hãy nhấn bắt đầu nhé!";
 
-      // 2. Lấy chữ từ AI
       const result = await model.generateContent(prompt);
       const text = result.response.text();
 
-      // 3. PHÁT ÂM THANH GIỌNG CHỊ GOOGLE XỊN (Không lơ lớ, không lỗi Base64)
+      // 2. Dùng giọng chị Google chuẩn (giọng .mp3 nên cực mượt, không bị nuốt chữ)
       const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
       
       const audio = new Audio(googleTtsUrl);
+      audio.playbackRate = 0.95; // Đọc chậm lại một xíu cho rõ chữ
       await audio.play();
 
     } catch (error) {
-      console.error("Lỗi AI hoặc âm thanh:", error);
-      // Phương án dự phòng cuối cùng nếu mạng lỗi
+      console.error("Lỗi âm thanh:", error);
+      // Dự phòng nếu mạng yếu không tải được giọng Google
       const fallback = new SpeechSynthesisUtterance("Chào mừng bạn đến với thí nghiệm đo tốc độ âm thanh.");
       fallback.lang = 'vi-VN';
+      fallback.rate = 0.8;
       window.speechSynthesis.speak(fallback);
     }
-  };
+  }; // <--- PHẢI CÓ DẤU NÀY ĐỂ ĐÓNG HÀM playIntroAudio
   
   const handleStartIntro = async () => {
     setIsGeneratingAudio(true);
