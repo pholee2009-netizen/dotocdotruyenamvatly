@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import WaveChart from './components/WaveChart';
 import ResultsTable from './components/ResultsTable';
 import FormulaDisplay from './components/FormulaDisplay';
-import { DataPoint, TrialResult } from './types';
+import { DataPoint, TrialResult } from './types.ts';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const MAX_TRIALS = 3;
