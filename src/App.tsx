@@ -178,25 +178,30 @@ const App: React.FC = () => {
     setAverageSpeed(null);
   };
 
-const showInstructions = async () => {
+const playIntroAudio = async () => {
     try {
+      // 1. Khởi tạo AI (Dùng đúng chuẩn GoogleGenerativeAI)
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      const prompt = "mMình sẽ giúp bạn đo tốc độ truyền sóng âm bằng cách bạn vỗ tay hay nói to vàoàn hình. Tôi sẽ vẽ đồ thị biểu diễn li độ U x và U tê. Chúng ta sẽ đo được bước sóng lam đa và chu kỳ T in. Tốc độ truyền sóng bằng lam đa chia cho chu kỳ. Các bạn làm 3 lần nhé";
+      const prompt = "Mình sẽ giúp bạn đo tốc độ truyền sóng âm bằng cách bạn vỗ tay hay nói to vào màn hình. Tôi sẽ vẽ đồ thị biểu diễn li độ U x và U tê. Chúng ta sẽ đo được bước sóng lam đa và chu kỳ T in. Tốc độ truyền sóng bằng lam đa chia cho chu kỳ. Các bạn làm 3 lần nhé.";
 
+      // 2. Lấy chữ từ AI
       const result = await model.generateContent(prompt);
       const text = result.response.text();
 
-      // Thay vì phát âm thanh, chúng ta đưa chữ vào biến instruction
-      setInstruction(text);
-
-      // Sau 10 giây thì tự động ẩn chữ đi cho đỡ vướng màn hình
-      setTimeout(() => setInstruction(""), 10000);
+      // 3. PHÁT ÂM THANH GIỌNG CHỊ GOOGLE XỊN (Không lơ lớ, không lỗi Base64)
+      const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
+      
+      const audio = new Audio(googleTtsUrl);
+      await audio.play();
 
     } catch (error) {
-      console.error("Lỗi lấy hướng dẫn:", error);
-      setInstruction("Hãy vỗ tay để bắt đầu đo tốc độ âm thanh nhé!");
+      console.error("Lỗi AI hoặc âm thanh:", error);
+      // Phương án dự phòng cuối cùng nếu mạng lỗi
+      const fallback = new SpeechSynthesisUtterance("Chào mừng bạn đến với thí nghiệm đo tốc độ âm thanh.");
+      fallback.lang = 'vi-VN';
+      window.speechSynthesis.speak(fallback);
     }
   };
   
