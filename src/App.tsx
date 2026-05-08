@@ -180,24 +180,24 @@ const App: React.FC = () => {
 
   const playIntroAudio = async () => {
     try {
-      // 1. Khởi tạo AI
+     // 1. Thiết lập AI
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       const prompt = "Mình sẽ giúp bạn đo tốc độ truyền sóng âm bằng cách bạn vỗ tay hay nói to vào màn hình. Tôi sẽ vẽ đồ thị biểu diễn li độ U x và U tê. Chúng ta sẽ đo được bước sóng lam đa và chu kỳ T in. Tốc độ truyền sóng bằng lam đa chia cho chu kỳ. Các bạn làm 3 lần nhé.";
       
-      // 2. Gọi API
-      const result = await model.generateContent([prompt]);
-      const response = await result.response;
-      
-      const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      const outputNode = outputAudioContext.createGain();
-      outputNode.connect(outputAudioContext.destination);
-
-      // 3. Lấy dữ liệu âm thanh
-      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      if (!base64Audio) {
-        throw new Error("No audio data received from API.");
+      try {
+        // 2. Lấy nội dung chữ từ AI
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        
+        // 3. Đọc chữ thành tiếng bằng giọng nói của trình duyệt
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'vi-VN'; 
+        window.speechSynthesis.speak(utterance);
+      } catch (error) {
+        console.error("Lỗi gọi AI:", error);
       }
 
       const audioBuffer = await decodeAudioData(
