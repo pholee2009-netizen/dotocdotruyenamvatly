@@ -179,48 +179,31 @@ const App: React.FC = () => {
   };
 
   const playIntroAudio = async () => {
-    try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const prompt = " mMình sẽ giúp bạn đo tốc độ truyền sóng âm bằng cách bạn vỗ tay hay nói to vàoàn hình. Tôi sẽ vẽ đồ thị biểu diễn li độ U x và U tê. Chúng ta sẽ đo được bước sóng lam đa và chu kỳ T in. Tốc độ truyền sóng bằng lam đa chia cho chu kỳ. Các bạn làm 3 lần nhé.";
-        
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash-preview-tts",
-            contents: [{ parts: [{ text: prompt }] }],
-            config: {
-                responseModalities: [Modality.AUDIO],
-                speechConfig: {
-                    voiceConfig: {
-                        prebuiltVoiceConfig: { voiceName: 'Kore' },
-                    },
-                },
-            },
-        });
-        
-        const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-        const outputNode = outputAudioContext.createGain();
-        outputNode.connect(outputAudioContext.destination);
+    try {
+      // 1. Khởi tạo AI (Dùng đúng chuẩn GoogleGenerativeAI)
+      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      const prompt = "Mình sẽ giúp bạn đo tốc độ truyền sóng âm bằng cách bạn vỗ tay hay nói to vào màn hình. Tôi sẽ vẽ đồ thị biểu diễn li độ U x và U tê. Chúng ta sẽ đo được bước sóng lam đa và chu kỳ T in. Tốc độ truyền sóng bằng lam đa chia cho chu kỳ. Các bạn làm 3 lần nhé.";
 
-        const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-        if (!base64Audio) {
-            throw new Error("No audio data received from API.");
-        }
+      // 2. Lấy chữ từ AI
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
 
-        const audioBuffer = await decodeAudioData(
-            decode(base64Audio),
-            outputAudioContext,
-            24000,
-            1,
-        );
-        const source = outputAudioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(outputNode);
-        source.start();
+      // 3. PHÁT ÂM THANH GIỌNG CHỊ GOOGLE XỊN (Không lơ lớ, không lỗi Base64)
+      const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
+      
+      const audio = new Audio(googleTtsUrl);
+      await audio.play();
 
-    } catch (error) {
-        console.error("Error generating or playing audio:", error);
-        alert("Đã có lỗi xảy ra khi tải âm thanh hướng dẫn.");
-    }
-  };
+    } catch (error) {
+      console.error("Lỗi AI hoặc âm thanh:", error);
+      // Phương án dự phòng cuối cùng nếu mạng lỗi
+      const fallback = new SpeechSynthesisUtterance("Chào mừng bạn đến với thí nghiệm đo tốc độ âm thanh.");
+      fallback.lang = 'vi-VN';
+      window.speechSynthesis.speak(fallback);
+    }
+  };
   
   const handleStartIntro = async () => {
     setIsGeneratingAudio(true);
