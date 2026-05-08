@@ -180,43 +180,24 @@ const App: React.FC = () => {
 
   const playIntroAudio = async () => {
     try {
-     // 1. Thiết lập AI
+     const playGuidance = async () => {
+    try {
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || "");
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      
       const prompt = "Mình sẽ giúp bạn đo tốc độ truyền sóng âm bằng cách bạn vỗ tay hay nói to vào màn hình. Tôi sẽ vẽ đồ thị biểu diễn li độ U x và U tê. Chúng ta sẽ đo được bước sóng lam đa và chu kỳ T in. Tốc độ truyền sóng bằng lam đa chia cho chu kỳ. Các bạn làm 3 lần nhé.";
-      
-      try {
-        // 2. Lấy nội dung chữ từ AI
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-        
-        // 3. Đọc chữ thành tiếng bằng giọng nói của trình duyệt
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'vi-VN'; 
-        window.speechSynthesis.speak(utterance);
-      } catch (error) {
-        console.error("Lỗi gọi AI:", error);
-      }
 
-      const audioBuffer = await decodeAudioData(
-        decode(base64Audio),
-        outputAudioContext,
-        24000,
-        1,
-      );
-      const source = outputAudioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(outputNode);
-      source.start();
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
 
+      // Dùng giọng nói máy để đọc
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'vi-VN';
+      window.speechSynthesis.speak(utterance);
     } catch (error) {
-      console.error("Error generating or playing audio:", error);
-      alert("Đã có lỗi xảy ra khi tải âm thanh hướng dẫn.");
+      console.error("Lỗi AI hoặc âm thanh:", error);
     }
   };
-
   const handleStartIntro = async () => {
     setIsGeneratingAudio(true);
     await playIntroAudio();
