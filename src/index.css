@@ -1,12 +1,21 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc; /* Giữ nguyên màu nền xám nhạt của bạn */
-}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Từ Điển Vật Lý Việt-Anh</title> 
 
-/* Thêm dòng này để các hiệu ứng chuyển động mượt hơn */
-* {
-  transition: all 0.2s ease-in-out;
-}
+    <!-- 1. Nạp bộ màu sắc và bố cục của Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Nạp bộ Icon (rất cần nếu code AI Studio của bạn có dùng icon) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- 3. Cái hộp trống để React "vẽ" giao diện (từ file App.tsx) vào đây -->
+    <div id="root"></div>
+    
+    <!-- 4. Lệnh kết nối cực kỳ quan trọng để Vercel/Vite chạy file code của bạn -->
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
