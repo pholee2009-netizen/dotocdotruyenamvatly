@@ -3,7 +3,7 @@ import WaveChart from './components/WaveChart';
 import ResultsTable from './components/ResultsTable';
 import FormulaDisplay from './components/FormulaDisplay';
 import { DataPoint, TrialResult } from './types';
-import { GoogleGenAI, Modality } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const MAX_TRIALS = 3;
 const AMPLITUDE = 1;
@@ -180,21 +180,42 @@ const App: React.FC = () => {
 
   const playIntroAudio = async () => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        // 1. Khởi tạo AI với tên đúng là GoogleGenerativeAI
+        const genAI = new GoogleGenerativeAI(process.env.API_KEY || "");
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
         const prompt = "Mình sẽ giúp bạn đo tốc độ truyền sóng âm bằng cách bạn vỗ tay hay nói to vào màn hình. Tôi sẽ vẽ đồ thị biểu diễn li độ U x và U tê. Chúng ta sẽ đo được bước sóng lam đa và chu kỳ T in. Tốc độ truyền sóng bằng lam đa chia cho chu kỳ. Các bạn làm 3 lần nhé.";
         
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash-preview-tts",
-            contents: [{ parts: [{ text: prompt }] }],
-            config: {
-                responseModalities: [Modality.AUDIO],
-                speechConfig: {
-                    voiceConfig: {
-                        prebuiltVoiceConfig: { voiceName: 'Kore' },
-                    },
-                },
-            },
-        });
+        // 2. Gọi API theo cách mới nhất
+        const result = await model.generateContent([prompt]);
+        const response = await result.response;
+        
+        const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        const outputNode = outputAudioContext.createGain();
+        outputNode.connect(outputAudioContext.destination);
+
+        // 3. Lấy dữ liệu âm thanh trả về
+        const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (!base64Audio) {
+            throw new Error("No audio data received from API.");
+        }
+
+        const audioBuffer = await decodeAudioData(
+            decode(base64Audio),
+            outputAudioContext,
+            24000,
+            1,
+        );
+        const source = outputAudioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(outputNode);
+        source.start();
+
+    } catch (error) {
+        console.error("Error generating or playing audio:", error);
+        alert("Đã có lỗi xảy ra khi tải âm thanh hướng dẫn.");
+    }
+  };
         
         const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
         const outputNode = outputAudioContext.createGain();
