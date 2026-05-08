@@ -186,21 +186,37 @@ const App: React.FC = () => {
       
       const prompt = "Chào mừng bạn! Hãy nghe hướng dẫn ngắn để bắt đầu thí nghiệm đo tốc độ âm thanh nhé.";
 
-      // 2. Chỉ lấy CHỮ từ AI (không lấy audio vì audio hay bị lỗi data)
+      // 2. Chỉ lấy CHỮ từ AI
       const result = await model.generateContent(prompt);
       const text = result.response.text();
 
-      // 3. Dùng giọng nói có sẵn của máy tính để đọc chữ đó lên
-      // Cách này không cần mạng mạnh, không lo thiếu data, cực kỳ ổn định
+      // 3. Cấu hình giọng đọc "xịn"
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'vi-VN'; 
+      
+      // Lấy danh sách giọng nói máy có sẵn
+      const voices = window.speechSynthesis.getVoices();
+      
+      // Ưu tiên tìm giọng Google hoặc giọng Việt Nam chuẩn
+      const premiumVoice = voices.find(v => 
+        (v.lang.includes('vi-VN') && v.name.includes('Google')) || 
+        v.lang.includes('vi-VN')
+      );
+
+      if (premiumVoice) {
+        utterance.voice = premiumVoice;
+      }
+
+      utterance.lang = 'vi-VN';
+      utterance.rate = 0.9;  // Đọc chậm lại một chút cho rõ chữ (0.9 là đẹp)
+      utterance.pitch = 1.0; // Độ cao của giọng (1.0 là bình thường)
+
       window.speechSynthesis.speak(utterance);
 
     } catch (error) {
       console.error("Lỗi âm thanh:", error);
-      // Nếu AI lỗi, vẫn có một câu chào mặc định để không bị hiện bảng đỏ
       const fallback = new SpeechSynthesisUtterance("Chào mừng bạn đến với thí nghiệm đo tốc độ âm thanh.");
       fallback.lang = 'vi-VN';
+      fallback.rate = 0.9;
       window.speechSynthesis.speak(fallback);
     }
   };
