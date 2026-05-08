@@ -186,40 +186,41 @@ const App: React.FC = () => {
       
       const prompt = "Chào mừng bạn! Hãy nghe hướng dẫn ngắn để bắt đầu thí nghiệm đo tốc độ âm thanh nhé.";
 
-      // 2. Chỉ lấy CHỮ từ AI
+      // 2. Lấy chữ từ AI
       const result = await model.generateContent(prompt);
       const text = result.response.text();
 
-      // 3. Cấu hình giọng đọc "xịn"
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      // Lấy danh sách giọng nói máy có sẵn
-      const voices = window.speechSynthesis.getVoices();
-      
-      // Ưu tiên tìm giọng Google hoặc giọng Việt Nam chuẩn
-      const premiumVoice = voices.find(v => 
-        (v.lang.includes('vi-VN') && v.name.includes('Google')) || 
-        v.lang.includes('vi-VN')
-      );
+      // 3. Hàm hỗ trợ chọn giọng xịn nhất
+      const speakWithBestVoice = () => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = window.speechSynthesis.getVoices();
+        
+        // Ưu tiên tìm giọng Google (nghe rất giống người thật)
+        const googleVoice = voices.find(v => v.lang.includes('vi-VN') && v.name.includes('Google'));
+        // Nếu không có Google, tìm bất kỳ giọng Việt nào khác
+        const viVoice = voices.find(v => v.lang.includes('vi-VN'));
 
-      if (premiumVoice) {
-        utterance.voice = premiumVoice;
+        utterance.voice = googleVoice || viVoice || null;
+        utterance.lang = 'vi-VN';
+        utterance.rate = 0.85; // Đọc chậm lại chút nữa cho rõ chữ
+        utterance.pitch = 1.0;
+
+        window.speechSynthesis.speak(utterance);
+      };
+
+      // Mẹo: Nếu danh sách giọng chưa tải xong, đợi nó tải rồi mới nói
+      if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.onvoiceschanged = speakWithBestVoice;
+      } else {
+        speakWithBestVoice();
       }
-
-      utterance.lang = 'vi-VN';
-      utterance.rate = 0.9;  // Đọc chậm lại một chút cho rõ chữ (0.9 là đẹp)
-      utterance.pitch = 1.0; // Độ cao của giọng (1.0 là bình thường)
-
-      window.speechSynthesis.speak(utterance);
 
     } catch (error) {
       console.error("Lỗi âm thanh:", error);
-      const fallback = new SpeechSynthesisUtterance("Chào mừng bạn đến với thí nghiệm đo tốc độ âm thanh.");
+      const fallback = new SpeechSynthesisUtterance("Chào mừng bạn đến với thí nghiệm.");
       fallback.lang = 'vi-VN';
-      fallback.rate = 0.9;
       window.speechSynthesis.speak(fallback);
     }
-  };
   
   const handleStartIntro = async () => {
     setIsGeneratingAudio(true);
