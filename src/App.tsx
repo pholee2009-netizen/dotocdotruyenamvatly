@@ -3,7 +3,7 @@ import WaveChart from './components/WaveChart';
 import ResultsTable from './components/ResultsTable';
 import FormulaDisplay from './components/FormulaDisplay';
 import { DataPoint, TrialResult } from './types';
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/generative-ai";
 
 const MAX_TRIALS = 3;
 const AMPLITUDE = 1;
